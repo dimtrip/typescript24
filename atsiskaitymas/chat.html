@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat</title>
+  <link rel="stylesheet" href="chat.css">
+  <script src="chat.js"> defer</script>
+</head>
+<body>
+<header>
+  <nav>
+    <div id="user-info">
+      <span id="user-email">Email: example@user.com</span>
+      <button id="logout-button">Logout</button>
+    </div>
+    <div id="navigation-links">
+      <a href="gallery.html">Gallery</a>
+      <a href="profile.html">Profile</a>
+      <a href="home.html">Home</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <h1>Chat</h1>
+  <section id="chat-container">
+    <div id="message-history" class="message-history">
+    </div>
+    <form id="message-form">
+      <input type="text" id="message-input" placeholder="Type a message..." required>
+      <button type="submit">Send</button>
+    </form>
+  </section>
+</main>
+
+
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Dmitrijaus Html</title>
+  <style>
+    body {
+      margin: 100px;
+      padding: 100px;
+      font-family: Arial, sans-serif;
+      background-image: url("https://media.istockphoto.com/id/1345876096/vector/halloween-night-background-scary-cemetery-and-full-moon-vector-banner.jpg?s=612x612&w=0&k=20&c=F9dCbuHEzjn1u6_ZBGlFmGqR6c-62NluzQttFASClmc=");
+      background-size: cover;
+    }
+
+    .enemy {
+      position: absolute;
+      font-size: 60px;
+    }
+
+    .enemy .health-bar {
+      position: absolute;
+      top: -10px;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background-color: #ddd;
+      border-radius: 50px;
+    }
+
+    .enemy .health-bar .health {
+      height: 100%;
+      background-color: #c82a02;
+      border-radius: 50px;
+    }
+
+    .skull {
+      font-size: 60px;
+    }
+
+    .game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px;
+      color: #ececec;
+      font-weight: bold;
+      display: none;
+      background-color: #c82a02;
+      border-radius: 20px;
+    }
+
+    .game-over:hover {
+      background-color: #9cfb69;
+      color: white;
+      display: block;
+      cursor: pointer;
+      border-radius: 10px;
+    }
+
+    .score-bar {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 30px;
+      background-color: #000000;
+      border-radius: 5px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score {
+      height: 100%;
+      background-color: #82d65d;
+      width: 0%;
+      text-align: center;
+      line-height: 30px;
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    /* Unit purchase section */
+    .unit-section {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+    }
+
+    .unit-slot {
+      width: 60px;
+      height: 60px;
+      background-color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      font-size: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .unit-slot:hover {
+      background-color: rgba(255, 255, 255, 1);
+    }
+
+    .unit-slot.disabled {
+      background-color: rgba(128, 128, 128, 0.7);
+      cursor: not-allowed;
+    }
+  </style>
+  <script>
+    const enemySpeed = 1;
+    const enemyHealth = 100;
+
+    let gameOver = false;
+    let money = 0;  // Changed from 'score' to 'money'
+    let totalEnemies = 0;
+    let enemyInterval;
+    let unitsPurchased = 0;
+    let unitCosts = [100, 200, 300, 400, 500];  // Costs for each unit
+    let units = [];  // Array to hold purchased units
+
+    // Function to create and move enemies
+    function createEnemy() {
+      if (gameOver) return;
+
+      const enemy = document.createElement("div");
+
+      enemy.classList.add("enemy");
+      enemy.textContent = "👽";
+      document.body.appendChild(enemy);
+
+      const startX = Math.random() * (window.innerWidth - 100);
+      enemy.style.left = startX + "px";
+      enemy.style.top = "0px";
+
+      let health = enemyHealth;
+
+      const healthBar = document.createElement("div");
+      healthBar.classList.add("health-bar");
+
+      const healthFill = document.createElement("div");
+      healthFill.classList.add("health");
+      healthBar.appendChild(healthFill);
+      enemy.appendChild(healthBar);
+      totalEnemies++;
+
+      function moveEnemy() {
+        if (gameOver) return;
+        let top = parseFloat(enemy.style.top || 0);
+        top += enemySpeed;
+        if (top >= window.innerHeight - 100) {
+          gameOver = true;
+          document.querySelector(".game-over").style.display = "block";
+          return;
+        }
+        enemy.style.top = top + "px";
+        healthFill.style.width = health + "%";
+        if (health <= 0) {
+          // Replace skull with a death animation or skull
+          enemy.innerHTML = "☠️";  // Skull emoji showing that enemy is dead
+          money += 10;  // Increase money instead of score
+          updateMoney();
+
+          // Remove skull after 1 second
+          setTimeout(() => {
+            enemy.innerHTML = "";  // Remove skull or any other death animation
+          }, 1000);  // Adjust the time if needed
+
+          return;
+        }
+        requestAnimationFrame(moveEnemy);
+      }
+      moveEnemy();
+      enemy.addEventListener("click", () => {
+        if (gameOver) return;
+        health -= 50;
+        if (health <= 0) {
+          enemy.innerHTML = "☠️";
+          updateMoney();
+
+          // Remove skull after some time
+          setTimeout(() => {
+            enemy.innerHTML = "";  // Remove skull after 1 second
+          }, 1000);  // Adjust the time if needed
+        }
+      });
+    }
+
+    // Function to update money
+    function updateMoney() {
+      const moneyBar = document.querySelector(".score");
+      const moneyPercentage = (money / (totalEnemies * 10)) * 100;
+      moneyBar.style.width = moneyPercentage + "%";
+      moneyBar.textContent = "Money: $" + money;
+    }
+
+    // Restart the game when clicked on 'game-over' button
+    function restartGame() {
+      clearInterval(enemyInterval);
+      gameOver = false;
+      money = 0;  // Reset money
+      totalEnemies = 0;
+      unitsPurchased = 0;
+      units = [];
+      document.querySelector(".game-over").style.display = "none";
+
+      const enemies = document.querySelectorAll(".enemy");
+      enemies.forEach(enemy => enemy.remove());
+
+      enemyInterval = setInterval(createEnemy, 1000);
+    }
+
+    // Function to purchase units
+    function purchaseUnit(index) {
+      if (gameOver) return;
+
+      const cost = unitCosts[index];
+      if (money >= cost && unitsPurchased < 5) {
+        money -= cost;
+        unitsPurchased++;
+        units.push(index);  // Record the unit purchase
+
+        // Disable the purchased unit slot
+        document.querySelectorAll(".unit-slot")[index].classList.add("disabled");
+
+        // Add functionality to kill enemies (e.g., spawn units that click on enemies)
+        units[index] = setInterval(() => {
+          if (gameOver) return;
+          document.querySelectorAll(".enemy").forEach(enemy => {
+            const rect = enemy.getBoundingClientRect();
+            const unitSize = 50;  // Unit attack size
+            // If unit is near an enemy, destroy enemy
+            if (rect.top < unitSize) {
+              enemy.innerHTML = "☠️";
+              money += 10;  // Increase money instead of score
+              updateMoney();
+            }
+          });
+        }, 1000);
+      }
+    }
+
+    // Function to handle resizing the window
+    window.addEventListener("resize", () => {
+      if (gameOver) {
+        restartGame();
+      }
+    });
+
+    // Initialize the game
+    enemyInterval = setInterval(createEnemy, 1000);
+    document.querySelector(".game-over").addEventListener("click", restartGame);
+    document.addEventListener('DOMContentLoaded', function () {
+      const enemySpeed = 1;
+      const enemyHealth = 100;
+
+      let gameOver = false;
+      let money = 0;  // Changed from 'score' to 'money'
+      let totalEnemies = 0;
+      let enemyInterval;
+      let unitsPurchased = 0;
+      let unitCosts = [100, 200, 300, 400, 500];  // Costs for each unit
+      let units = [];  // Array to hold purchased units
+
+      // Function to create and move enemies
+      function createEnemy() {
+        if (gameOver) return;
+
+        const enemy = document.createElement("div");
+
+        enemy.classList.add("enemy");
+        enemy.textContent = "👽";
+        document.body.appendChild(enemy);
+
+        const startX = Math.random() * (window.innerWidth - 100);
+        enemy.style.left = startX + "px";
+        enemy.style.top = "0px";
+
+        let health = enemyHealth;
+
+        const healthBar = document.createElement("div");
+        healthBar.classList.add("health-bar");
+
+        const healthFill = document.createElement("div");
+        healthFill.classList.add("health");
+        healthBar.appendChild(healthFill);
+        enemy.appendChild(healthBar);
+        totalEnemies++;
+
+        function moveEnemy() {
+          if (gameOver) return;
+          let top = parseFloat(enemy.style.top || 0);
+          top += enemySpeed;
+          if (top >= window.innerHeight - 100) {
+            gameOver = true;
+            document.querySelector(".game-over").style.display = "block";
+            return;
+          }
+          enemy.style.top = top + "px";
+          healthFill.style.width = health + "%";
+          if (health <= 0) {
+            // Replace skull with a death animation or skull
+            enemy.innerHTML = "☠️";  // Skull emoji showing that enemy is dead
+            money += 10;  // Increase money instead of score
+            updateMoney();
+
+            // Remove skull after 1 second
+            setTimeout(() => {
+              enemy.innerHTML = "";  // Remove skull or any other death animation
+            }, 1000);  // Adjust the time if needed
+
+            return;
+          }
+          requestAnimationFrame(moveEnemy);
+        }
+        moveEnemy();
+        enemy.addEventListener("click", () => {
+          if (gameOver) return;
+          health -= 50;
+          if (health <= 0) {
+            enemy.innerHTML = "☠️";
+            updateMoney();
+
+            // Remove skull after some time
+            setTimeout(() => {
+              enemy.innerHTML = "";  // Remove skull after 1 second
+            }, 1000);  // Adjust the time if needed
+          }
+        });
+      }
+
+      // Function to update money
+      function updateMoney() {
+        const moneyBar = document.querySelector(".score");
+        const moneyPercentage = (money / (totalEnemies * 10)) * 100;
+        moneyBar.style.width = moneyPercentage + "%";
+        moneyBar.textContent = "Money: $" + money;
+      }
+
+      // Restart the game when clicked on 'game-over' button
+      function restartGame() {
+        clearInterval(enemyInterval);
+        gameOver = false;
+        money = 0;  // Reset money
+        totalEnemies = 0;
+        unitsPurchased = 0;
+        units = [];
+        document.querySelector(".game-over").style.display = "none";
+
+        const enemies = document.querySelectorAll(".enemy");
+        enemies.forEach(enemy => enemy.remove());
+
+        enemyInterval = setInterval(createEnemy, 1000);
+      }
+
+      // Function to purchase units
+      function purchaseUnit(index) {
+        if (gameOver) return;
+
+        const cost = unitCosts[index];
+        if (money >= cost && unitsPurchased < 5) {
+          money -= cost;
+          unitsPurchased++;
+          units.push(index);  // Record the unit purchase
+
+          // Disable the purchased unit slot
+          document.querySelectorAll(".unit-slot")[index].classList.add("disabled");
+
+          // Add functionality to kill enemies (e.g., spawn units that click on enemies)
+          units[index] = setInterval(() => {
+            if (gameOver) return;
+            document.querySelectorAll(".enemy").forEach(enemy => {
+              const rect = enemy.getBoundingClientRect();
+              const unitSize = 50;  // Unit attack size
+              // If unit is near an enemy, destroy enemy
+              if (rect.top < unitSize) {
+                enemy.innerHTML = "☠️";
+                money += 10;  // Increase money instead of score
+                updateMoney();
+              }
+            });
+          }, 1000);
+        }
+      }
+
+      // Function to handle resizing the window
+      window.addEventListener("resize", () => {
+        if (gameOver) {
+          restartGame();
+        }
+      });
+
+      // Initialize the game
+      enemyInterval = setInterval(createEnemy, 1000);
+      document.querySelector(".game-over").addEventListener("click", restartGame);
+    });
+
+  </script>
+</head>
+
+<body>
+
+<div class="game-over">☠️RESTART☠️</div>
+<div class="score-bar">
+  <div class="score">Money: $0</div>
+</div>
+
+<!-- Unit purchase section -->
+<div class="unit-section">
+  <div class="unit-slot" onclick="purchaseUnit(0)">👻</div>
+  <div class="unit-slot" onclick="purchaseUnit(1)">🧛</div>
+  <div class="unit-slot" onclick="purchaseUnit(2)">💀</div>
+  <div class="unit-slot" onclick="purchaseUnit(3)">🦇</div>
+  <div class="unit-slot" onclick="purchaseUnit(4)">👹</div>
+</div>
+
+</body>
+
+</html>
