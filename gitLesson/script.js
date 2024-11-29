@@ -11,7 +11,7 @@ const fetchUsers = async () => {
 
 const displayUsers = (users) => {
     const container = document.getElementById('user-cards-container');
-    container.innerHTML = ''; // Clear any existing cards
+    container.innerHTML = '';
 
     users.forEach(user => {
         const card = document.createElement('div');
